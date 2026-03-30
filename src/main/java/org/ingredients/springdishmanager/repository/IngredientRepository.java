@@ -7,6 +7,7 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public class IngredientRepository {
@@ -28,5 +29,22 @@ public class IngredientRepository {
                         .price(rs.getDouble("price"))
                         .build()
         );
+    }
+
+    public Optional<Ingredient> findById(Integer id) {
+        String sql = "SELECT id, name, category, price FROM ingredient WHERE id = ?";
+
+        List<Ingredient> results = jdbcTemplate.query(sql,
+                new Object[]{id},
+                (rs, rowNum) ->
+                        Ingredient.builder()
+                                .id(rs.getInt("id"))
+                                .name(rs.getString("name"))
+                                .category(CategoryEnum.valueOf(rs.getString("category")))
+                                .price(rs.getDouble("price"))
+                                .build()
+        );
+
+        return results.stream().findFirst();
     }
 }
