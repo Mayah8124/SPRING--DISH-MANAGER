@@ -8,6 +8,7 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public class DishRepository {
@@ -56,4 +57,31 @@ public class DishRepository {
         return dishes;
     }
 
+    public Optional<Dish> findById(Integer id) {
+        String sql = "SELECT id, name, selling_price, dish_type FROM dish WHERE id = ?";
+        List<Dish> dishes = jdbcTemplate.query(sql, new Object[]{id}, (rs, rowNum) ->
+                Dish.builder()
+                        .id(rs.getInt("id"))
+                        .name(rs.getString("name"))
+                        .price(rs.getDouble("selling_price"))
+                        .build()
+        );
+        return dishes.stream().findFirst();
+    }
+
+    public void removeAllIngredientsFromDish(Integer dishId) {
+        String sql = "DELETE FROM dish_ingredient WHERE id_dish = ?";
+        jdbcTemplate.update(sql, dishId);
+    }
+
+    public void addIngredientToDish(Integer dishId, Integer ingredientId) {
+        String sql = "INSERT INTO dish_ingredient(id_dish, id_ingredient) VALUES (?, ?)";
+        jdbcTemplate.update(sql, dishId, ingredientId);
+    }
+
+    public boolean ingredientExists(Integer ingredientId) {
+        String sql = "SELECT COUNT(id) FROM ingredient WHERE id = ?";
+        Integer count = jdbcTemplate.queryForObject(sql, new Object[]{ingredientId}, Integer.class);
+        return count != null && count > 0;
+    }
 }

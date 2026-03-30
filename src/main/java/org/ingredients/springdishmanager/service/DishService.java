@@ -2,11 +2,13 @@ package org.ingredients.springdishmanager.service;
 
 import org.ingredients.springdishmanager.model.Dish;
 import org.ingredients.springdishmanager.model.DishIngredient;
+import org.ingredients.springdishmanager.model.Ingredient;
 import org.ingredients.springdishmanager.repository.DishRepository;
 import org.ingredients.springdishmanager.validator.DishValidator;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Optional;
 
 
 @Service
@@ -36,5 +38,20 @@ public class DishService {
         List<Dish> dishes = repository.findAll();
         validator.validateDish(dishes);
         return dishes;
+    }
+
+    public void updateDishIngredients(Integer dishId, List<Ingredient> ingredients) {
+        validator.validateIngredientsNotEmpty(ingredients);
+
+        Optional<Dish> optionalDish = repository.findById(dishId);
+        validator.validateDishFound(optionalDish, dishId);
+
+        repository.removeAllIngredientsFromDish(dishId);
+
+        for (Ingredient ingredient : ingredients) {
+            if (repository.ingredientExists(ingredient.getId())) {
+                repository.addIngredientToDish(dishId, ingredient.getId());
+            }
+        }
     }
 }
