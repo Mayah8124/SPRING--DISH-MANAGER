@@ -1,16 +1,19 @@
 package org.ingredients.springdishmanager.datasource;
 
 import javax.sql.DataSource;
-import java.sql.Connection;
-import java.sql.SQLException;
 
+import org.springframework.boot.CommandLineRunner;
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.boot.jdbc.DataSourceBuilder;
+
+import java.sql.Connection;
 
 @Configuration
 public class DataSourceConfig {
 
-    public DataSource createDataSource() {
+    @Bean
+    public DataSource dataSource() {
         return DataSourceBuilder.create()
                 .driverClassName("org.postgresql.Driver")
                 .url("jdbc:postgresql://localhost:5432/dish_management_db")
@@ -19,12 +22,14 @@ public class DataSourceConfig {
                 .build();
     }
 
-    public void testConnection() {
-        try (Connection conn = createDataSource().getConnection()) {
-            System.out.println("connected successfully !");
-        } catch (SQLException e) {
-            System.err.println("error while connecting : " + e.getMessage());
-        }
+    @Bean
+    public CommandLineRunner testConnection(DataSource dataSource) {
+        return args -> {
+            try (Connection conn = dataSource.getConnection()) {
+                System.out.println(" DB connected");
+            } catch (Exception e) {
+                System.err.println("DB error: " + e.getMessage());
+            }
+        };
     }
-
 }

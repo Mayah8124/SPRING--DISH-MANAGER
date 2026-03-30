@@ -9,5 +9,4 @@ public class SpringDishManagerApplication {
     public static void main(String[] args) {
         SpringApplication.run(SpringDishManagerApplication.class, args);
     }
-
 }
