@@ -3,6 +3,7 @@ package org.ingredients.springdishmanager.validator;
 import org.ingredients.springdishmanager.model.Ingredient;
 import org.springframework.stereotype.Component;
 
+import java.time.Instant;
 import java.util.Optional;
 
 @Component
@@ -16,6 +17,12 @@ public class StockValidator {
     public void validateQueryParameters(String at, String unit) {
         if (at == null || at.isBlank() || unit == null || unit.isBlank()) {
             throw new RuntimeException("Either mandatory query parameter `at` or `unit` is not provided");
+        }
+    }
+
+    public void validateDateParams(Instant from, Instant to) {
+        if (from == null || to == null) {
+            throw new RuntimeException("Each date parameter `from` and `to` are required");
         }
     }
 }

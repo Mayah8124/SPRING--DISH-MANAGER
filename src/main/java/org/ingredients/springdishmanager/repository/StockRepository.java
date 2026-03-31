@@ -5,6 +5,7 @@ import org.ingredients.springdishmanager.model.*;
 import org.springframework.stereotype.Repository;
 
 import javax.sql.DataSource;
+import javax.swing.text.html.Option;
 import java.sql.*;
 import java.time.Instant;
 import java.util.Optional;
@@ -91,5 +92,44 @@ public class StockRepository {
     private ResultSet executeQuery(PreparedStatement ps, Integer id) throws SQLException {
         ps.setInt(1, id);
         return ps.executeQuery();
+    }
+
+    public Optional<StockMovement> getStockMovementBetween (Instant from, Instant to) {
+        String sql = """
+                    SELECT s.id, s.type, s.creation_datetime, s.unit, s.quantity , i.id, i.name, i.category
+                    FROM stock_movement s
+                    JOIN ingredient i 
+                    ON s.id_ingredient = i.id
+                    WHERE creation_datetime >= ? AND creation_datetime <= ?
+                    ORDER BY creation_datetime DESC
+                """;
+
+        try (
+                Connection conn = dataSource.getConnection();
+                PreparedStatement ps = conn.prepareStatement(sql)
+                ) {
+            ps.setTimestamp(1, Timestamp.from(from));
+            ps.setTimestamp(2, Timestamp.from(to));
+
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    return Optional.of(
+                            StockMovement.builder()
+                                    .id(rs.getInt("id"))
+                                    .type(MovementTypeEnum.valueOf(rs.getString("type")))
+                                    .creationDatetime(rs.getTimestamp("creation_datetime").toInstant())
+                                    .value(StockValue.builder()
+                                            .unit(Unit.valueOf(rs.getString("unit")))
+                                            .quantity(rs.getDouble("quantity"))
+                                            .build())
+                                    .build()
+                    );
+                }
+                return Optional.empty();
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException("DB error while fetching stock", e);
+        }
+
     }
 }

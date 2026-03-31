@@ -30,4 +30,12 @@ public class StockService {
 
         return stockMovement.orElse(null);
     }
+
+    public StockMovement getStockBetween(Instant from, Instant at) {
+        validator.validateDateParams(from, at);
+
+        Optional<StockMovement>  stockMovement = repository.getStockMovementBetween(from, at);
+
+        return stockMovement.orElse(null);
+    }
 }

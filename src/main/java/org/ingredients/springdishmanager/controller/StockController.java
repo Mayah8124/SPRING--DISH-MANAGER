@@ -9,6 +9,8 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
+import java.time.Instant;
+
 @Controller
 @RequestMapping("/ingredients")
 public class StockController {
@@ -32,6 +34,20 @@ public class StockController {
                 return ResponseEntity.status(404).body(e.getMessage());
             } else {
                 return ResponseEntity.status(500).body(e.getMessage());
+            }
+        }
+    }
+    @GetMapping("/{id}/stockMovements?from={from}&to={to}")
+    public ResponseEntity<?> getStockMovements( @PathVariable Instant from,
+                                                @PathVariable Instant to) {
+        try {
+            StockMovement stockMovement = service.getStockBetween(from, to);
+            return ResponseEntity.ok(stockMovement);
+        } catch (RuntimeException e) {
+            if (e.getMessage().contains("not provided")) {
+                return ResponseEntity.badRequest().body(e.getMessage());
+            } else if (e.getMessage().contains("ingredient not found")) {
+                return ResponseEntity.status(404).body(e.getMessage());
             }
         }
     }
