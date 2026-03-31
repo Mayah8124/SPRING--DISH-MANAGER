@@ -7,6 +7,7 @@ import org.ingredients.springdishmanager.validator.StockValidator;
 import org.springframework.stereotype.Service;
 
 import java.time.Instant;
+import java.util.List;
 import java.util.Optional;
 
 @Service
@@ -31,11 +32,14 @@ public class StockService {
         return stockMovement.orElse(null);
     }
 
-    public StockMovement getStockBetween(Instant from, Instant at) {
-        validator.validateDateParams(from, at);
+    public List<StockMovement> getStockBetween(Integer id, Instant from, Instant to) {
 
-        Optional<StockMovement>  stockMovement = repository.getStockMovementBetween(from, at);
+        validator.validateDateParams(from, to);
 
-        return stockMovement.orElse(null);
+        if (!repository.ingredientExists(id)) {
+            throw new RuntimeException("Ingredient.id=" + id + " is not found");
+        }
+
+        return repository.getStockMovementsBetween(id, from, to);
     }
 }

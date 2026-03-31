@@ -8,6 +8,9 @@ import javax.sql.DataSource;
 import javax.swing.text.html.Option;
 import java.sql.*;
 import java.time.Instant;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Optional;
 
 @Repository
@@ -94,42 +97,84 @@ public class StockRepository {
         return ps.executeQuery();
     }
 
-    public Optional<StockMovement> getStockMovementBetween (Instant from, Instant to) {
+    public List<StockMovement> getStockMovementsBetween(
+            Integer ingredientId,
+            Instant from,
+            Instant to
+    ) {
+
         String sql = """
-                    SELECT s.id, s.type, s.creation_datetime, s.unit, s.quantity , i.id, i.name, i.category
-                    FROM stock_movement s
-                    JOIN ingredient i 
-                    ON s.id_ingredient = i.id
-                    WHERE creation_datetime >= ? AND creation_datetime <= ?
-                    ORDER BY creation_datetime DESC
-                """;
+        SELECT 
+            id,
+            type,
+            creation_datetime,
+            unit,
+            quantity
+        FROM stock_movement
+        WHERE id_ingredient = ?
+        AND creation_datetime BETWEEN ? AND ?
+        ORDER BY creation_datetime DESC
+    """;
+
+        List<StockMovement> results = new ArrayList<>();
 
         try (
                 Connection conn = dataSource.getConnection();
                 PreparedStatement ps = conn.prepareStatement(sql)
-                ) {
-            ps.setTimestamp(1, Timestamp.from(from));
-            ps.setTimestamp(2, Timestamp.from(to));
+        ) {
+
+            ps.setInt(1, ingredientId);
+            ps.setTimestamp(2, Timestamp.from(from));
+            ps.setTimestamp(3, Timestamp.from(to));
 
             try (ResultSet rs = ps.executeQuery()) {
-                if (rs.next()) {
-                    return Optional.of(
-                            StockMovement.builder()
-                                    .id(rs.getInt("id"))
-                                    .type(MovementTypeEnum.valueOf(rs.getString("type")))
-                                    .creationDatetime(rs.getTimestamp("creation_datetime").toInstant())
-                                    .value(StockValue.builder()
-                                            .unit(Unit.valueOf(rs.getString("unit")))
+
+                while (rs.next()) {
+
+                    StockMovement stockMovement = StockMovement.builder()
+                            .id(rs.getInt("id"))
+                            .type(MovementTypeEnum.valueOf(rs.getString("type")))
+                            .creationDatetime(
+                                    rs.getTimestamp("creation_datetime").toInstant()
+                            )
+                            .value(
+                                    StockValue.builder()
                                             .quantity(rs.getDouble("quantity"))
-                                            .build())
-                                    .build()
-                    );
+                                            .unit(
+                                                    Unit.valueOf(rs.getString("unit"))
+                                            )
+                                            .build()
+                            )
+                            .build();
+
+                    results.add(stockMovement);
                 }
-                return Optional.empty();
             }
+
         } catch (SQLException e) {
-            throw new RuntimeException("DB error while fetching stock", e);
+            throw new RuntimeException("DB error while fetching stock movements", e);
         }
 
+        return results;
+    }
+
+    public boolean ingredientExists(Integer id) {
+
+        String sql = "SELECT 1 FROM ingredient WHERE id = ?";
+
+        try (
+                Connection conn = dataSource.getConnection();
+                PreparedStatement ps = conn.prepareStatement(sql)
+        ) {
+
+            ps.setInt(1, id);
+
+            try (ResultSet rs = ps.executeQuery()) {
+                return rs.next();
+            }
+
+        } catch (SQLException e) {
+            throw new RuntimeException("DB error while checking ingredient existence", e);
+        }
     }
 }

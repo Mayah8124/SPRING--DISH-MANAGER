@@ -4,12 +4,10 @@ import org.ingredients.springdishmanager.model.StockMovement;
 import org.ingredients.springdishmanager.service.StockService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.*;
 
 import java.time.Instant;
+import java.util.List;
 
 @Controller
 @RequestMapping("/ingredients")
@@ -38,25 +36,28 @@ public class StockController {
         }
     }
 
-    @GetMapping("/{id}/stockMovements?from={from}&to={to}")
-    public ResponseEntity<? extends Object> getStockMovements(@PathVariable Instant from,
-                                                           @PathVariable Instant to,
-                                                           @PathVariable Integer id) {
+    @GetMapping("/{id}/stockMovements")
+    public ResponseEntity<?> getStockMovements(
+            @PathVariable Integer id,
+            @RequestParam Instant from,
+            @RequestParam Instant to
+    ) {
         try {
-            StockMovement stockMovement = service.getStockBetween(from, to);
-            return ResponseEntity.ok(stockMovement);
+            List<StockMovement> stockMovements = service.getStockBetween(id, from, to);
+            return ResponseEntity.ok(stockMovements);
+
         } catch (RuntimeException e) {
-            if (e.getMessage().contains("not provided")) {
+
+            if (e.getMessage().contains("required")) {
                 return ResponseEntity.badRequest().body(e.getMessage());
-            } else if (e.getMessage().contains("ingredient not found")) {
+            }
+
+            if (e.getMessage().contains("not found")) {
                 return ResponseEntity.status(404).body(e.getMessage());
             }
+
+            return ResponseEntity.badRequest().body(e.getMessage());
         }
-        return null;
     }
 
-    @GetMapping("/{id}/stockMovements")
-    public ResponseEntity<?> getStockMovements(@PathVariable Integer id) {
-
-    }
 }

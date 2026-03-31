@@ -24,5 +24,9 @@ public class StockValidator {
         if (from == null || to == null) {
             throw new RuntimeException("Each date parameter `from` and `to` are required");
         }
+
+        if (from.isAfter(to)) {
+            throw new RuntimeException("`from` must be before `to`");
+        }
     }
 }
