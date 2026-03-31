@@ -37,9 +37,11 @@ public class StockController {
             }
         }
     }
+
     @GetMapping("/{id}/stockMovements?from={from}&to={to}")
-    public ResponseEntity<?> getStockMovements( @PathVariable Instant from,
-                                                @PathVariable Instant to) {
+    public ResponseEntity<? extends Object> getStockMovements(@PathVariable Instant from,
+                                                           @PathVariable Instant to,
+                                                           @PathVariable Integer id) {
         try {
             StockMovement stockMovement = service.getStockBetween(from, to);
             return ResponseEntity.ok(stockMovement);
@@ -50,5 +52,11 @@ public class StockController {
                 return ResponseEntity.status(404).body(e.getMessage());
             }
         }
+        return null;
+    }
+
+    @GetMapping("/{id}/stockMovements")
+    public ResponseEntity<?> getStockMovements(@PathVariable Integer id) {
+
     }
 }
