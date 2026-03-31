@@ -5,11 +5,9 @@ import org.ingredients.springdishmanager.model.*;
 import org.springframework.stereotype.Repository;
 
 import javax.sql.DataSource;
-import javax.swing.text.html.Option;
 import java.sql.*;
 import java.time.Instant;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 
@@ -176,5 +174,57 @@ public class StockRepository {
         } catch (SQLException e) {
             throw new RuntimeException("DB error while checking ingredient existence", e);
         }
+    }
+
+    public List<StockMovement> saveAll(Integer ingredientId, List<CreateStockMovement> inputs) {
+
+        String sql = """
+            INSERT INTO stock_movement (id_ingredient, unit, quantity, type, creation_datetime)
+            VALUES (?, ?, ?, ?, now())
+            RETURNING id, type, unit, quantity, creation_datetime
+        """;
+
+        List<StockMovement> results = new ArrayList<>();
+
+        try (Connection conn = dataSource.getConnection()) {
+
+            for (CreateStockMovement input : inputs) {
+
+                try (PreparedStatement ps = conn.prepareStatement(sql)) {
+
+                    ps.setInt(1, ingredientId);
+                    ps.setString(2, input.getUnit().name());
+                    ps.setDouble(3, input.getQuantity());
+                    ps.setString(4, input.getType().name());
+
+                    try (ResultSet rs = ps.executeQuery()) {
+
+                        if (rs.next()) {
+                            results.add(mapResultSet(rs));
+                        }
+                    }
+                }
+            }
+
+        } catch (SQLException e) {
+            throw new RuntimeException("DB error while inserting stock movements", e);
+        }
+
+        return results;
+    }
+
+    private StockMovement mapResultSet(ResultSet rs) throws SQLException {
+
+        return StockMovement.builder()
+                .id(rs.getInt("id"))
+                .type(MovementTypeEnum.valueOf(rs.getString("type")))
+                .creationDatetime(rs.getTimestamp("creation_datetime").toInstant())
+                .value(
+                        StockValue.builder()
+                                .quantity(rs.getDouble("quantity"))
+                                .unit(Unit.valueOf(rs.getString("unit")))
+                                .build()
+                )
+                .build();
     }
 }

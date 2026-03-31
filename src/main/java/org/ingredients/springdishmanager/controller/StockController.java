@@ -1,5 +1,6 @@
 package org.ingredients.springdishmanager.controller;
 
+import org.ingredients.springdishmanager.model.CreateStockMovement;
 import org.ingredients.springdishmanager.model.StockMovement;
 import org.ingredients.springdishmanager.service.StockService;
 import org.springframework.http.ResponseEntity;
@@ -60,4 +61,23 @@ public class StockController {
         }
     }
 
+    @PostMapping("/{id}/stockMovements")
+    public ResponseEntity<?> createStockMovements(
+            @PathVariable Integer id,
+            @RequestBody List<CreateStockMovement> body
+    ) {
+
+        try {
+            List<StockMovement> result = service.create(id, body);
+            return ResponseEntity.ok(result);
+
+        } catch (RuntimeException e) {
+
+            if (e.getMessage().contains("not found")) {
+                return ResponseEntity.status(404).body(e.getMessage());
+            }
+
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
 }

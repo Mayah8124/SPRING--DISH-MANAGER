@@ -1,5 +1,6 @@
 package org.ingredients.springdishmanager.service;
 
+import org.ingredients.springdishmanager.model.CreateStockMovement;
 import org.ingredients.springdishmanager.model.Ingredient;
 import org.ingredients.springdishmanager.model.StockMovement;
 import org.ingredients.springdishmanager.repository.StockRepository;
@@ -41,5 +42,16 @@ public class StockService {
         }
 
         return repository.getStockMovementsBetween(id, from, to);
+    }
+
+    public List<StockMovement> create(Integer ingredientId, List<CreateStockMovement> inputs) {
+
+        validator.validateCreateInputs(inputs);
+
+        if (!repository.ingredientExists(ingredientId)) {
+            throw new RuntimeException("Ingredient.id=" + ingredientId + " is not found");
+        }
+
+        return repository.saveAll(ingredientId, inputs);
     }
 }
